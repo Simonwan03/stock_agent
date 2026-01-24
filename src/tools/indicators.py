@@ -1,5 +1,6 @@
 import pandas as pd
 
+# 计算年化波动率和最大回撤
 def risk_metrics(close: pd.Series) -> dict:
     rets = close.pct_change().dropna()
 
