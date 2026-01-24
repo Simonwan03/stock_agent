@@ -42,6 +42,7 @@ def build_gdelt_url(query: str, max_records: int) -> str:
 
 
 def fetch_financial_news(query: str, max_records: int = 20) -> List[NewsArticle]:
+    # time.sleep(5)  # To avoid rate limiting during rapid testing
     if max_records < 1:
         raise ValueError("max_records must be >= 1")
 
@@ -129,4 +130,5 @@ def main(argv: List[str]) -> int:
 
 
 if __name__ == "__main__":
+    # user's input from command line(starting from index 1)
     raise SystemExit(main(sys.argv[1:]))
