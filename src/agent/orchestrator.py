@@ -75,7 +75,11 @@ def run_daily(portfolio_path: str, settings: Settings) -> str:
         raise ValueError("portfolio.holdings 为空：请在 portfolio.json 里填入持仓。")
 
     # 2) 数据采集（此处由 tools 层负责具体实现）
-    price_series = fetch_daily_closes(all_tickers, lookback_days=settings.price_lookback_days)
+    price_series = fetch_daily_closes(
+        all_tickers,
+        lookback_days=settings.price_lookback_days,
+        provider=settings.market_data_provider,
+    )
     news_items = fetch_news(tickers, lookback_hours=settings.news_lookback_hours)
 
     # 3) 计算指标（量化侧）

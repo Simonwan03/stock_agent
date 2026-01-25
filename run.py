@@ -20,16 +20,19 @@ SRC_PATH = ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
+from agent.config import get_settings  # noqa: E402
 from agent.graph import build_graph  # noqa: E402
 
 def main():
     load_dotenv()
+    settings = get_settings()
     graph = build_graph()
 
     state = {
         "ticker": "AAPL",
         "start_date": "2022-01-01",
         "filing_form": "10-Q",
+        "portfolio_path": settings.portfolio_path,
     }
     out = graph.invoke(state)
 

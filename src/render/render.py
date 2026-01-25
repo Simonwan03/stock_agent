@@ -9,7 +9,11 @@ def render_markdown(template_dir: str, template_name: str, context: Dict[str, ob
     if template_path.exists():
         template = template_path.read_text(encoding="utf-8")
         for key, value in context.items():
-            template = template.replace(f"{{{{ {key} }}}}", str(value))
+            if isinstance(value, list):
+                rendered = "\n".join(f"- {item}" for item in value) or "- None"
+            else:
+                rendered = str(value)
+            template = template.replace(f"{{{{ {key} }}}}", rendered)
         return template
 
     title = context.get("title", "Daily Report")
