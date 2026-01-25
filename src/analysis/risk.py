@@ -18,7 +18,12 @@ def risk_metrics(close_prices: Iterable[float]) -> Dict[str, float]:
             "latest_close": closes[-1] if closes else 0.0,
         }
 
-    returns = [(closes[i] / closes[i - 1] - 1.0) for i in range(1, len(closes))]
+    returns = []
+    for i in range(1, len(closes)):
+        prev = closes[i - 1]
+        if prev == 0:
+            continue
+        returns.append(closes[i] / prev - 1.0)
     daily_vol = pstdev(returns) if len(returns) > 1 else 0.0
     annualized_vol = daily_vol * sqrt(252)
 

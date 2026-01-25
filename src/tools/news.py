@@ -8,6 +8,7 @@ import sys
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Iterable, List, Sequence
 
 # API official documentation:https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
@@ -39,7 +40,7 @@ def normalize_query(q: str) -> str:
         q = f"({q})"
     return q
 
-def build_gdelt_url(query: str, max_records: int) -> str:
+def build_gdelt_url(query: str, max_records: int, lookback_hours: int | None = None) -> str:
     query = normalize_query(query)
     params = {
         "query": f"{query} sourcelang:eng sourcecountry:US", # English articles only from the US
@@ -48,15 +49,20 @@ def build_gdelt_url(query: str, max_records: int) -> str:
         "maxrecords": max_records,
         "sort": "datedesc",
     }
+    if lookback_hours and lookback_hours > 0:
+        end_dt = datetime.utcnow()
+        start_dt = end_dt - timedelta(hours=lookback_hours)
+        params["startdatetime"] = start_dt.strftime("%Y%m%d%H%M%S")
+        params["enddatetime"] = end_dt.strftime("%Y%m%d%H%M%S")
     return f"{GDELT_DOC_ENDPOINT}?{urllib.parse.urlencode(params)}" # complete URL
 
 
-def fetch_financial_news(query: str, max_records: int = 20) -> List[NewsArticle]:
+def fetch_financial_news(query: str, max_records: int = 20, lookback_hours: int | None = None) -> List[NewsArticle]:
     # time.sleep(5)  # To avoid rate limiting during rapid testing
     if max_records < 1:
         raise ValueError("max_records must be >= 1")
 
-    url = build_gdelt_url(query, max_records)
+    url = build_gdelt_url(query, max_records, lookback_hours=lookback_hours)
     print("Request URL:", url, file=sys.stderr)
 
     req = urllib.request.Request(
@@ -103,7 +109,11 @@ def fetch_news(tickers: Sequence[str], lookback_hours: int = 72) -> List[NewsIte
         return []
     query = " OR ".join(tickers)
     try:
-        articles = fetch_financial_news(query, max_records=min(20, len(tickers) * 5))
+        articles = fetch_financial_news(
+            query,
+            max_records=min(20, len(tickers) * 5),
+            lookback_hours=lookback_hours,
+        )
     except Exception:
         return []
 

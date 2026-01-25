@@ -1,13 +1,13 @@
 [llm]
 # OpenAI-compatible base URL. Example: https://api.openai.com/v1 or https://api.deepseek.com/v1
-base_url = "https://api.openai.com/v1"
-api_key = "YOUR_LLM_API_KEY"
-model = "gpt-4o-mini"
+base_url = "https://api.deepseek.com"
+api_key = "sk-1fd7f385ae6549a7b2891a7eed1d226d"
+model = "deepseek-chat"
 
 [market_data]
 # Supported: "stooq" (no API key, free)
 provider = "stooq"
-lookback_days = 252
+lookback_days = 100
 
 [news]
 lookback_hours = 72
