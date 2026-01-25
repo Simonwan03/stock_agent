@@ -45,6 +45,7 @@ python run.py
 ---
 
 ## 主要模块说明
+```
 daily-report/
 ├─ pyproject.toml                 # 推荐用 Poetry/uv/pip-tools 管理依赖
 ├─ README.md
@@ -104,7 +105,7 @@ daily-report/
    ├─ test_risk.py
    ├─ test_news_gdelt.py
    └─ test_pipeline_smoke.py
-
+```
 ---
 
 ## 使用教程
