@@ -4,12 +4,10 @@
 
 ## MVP功能
 1. 每日晨报：Top 5 + For You（与你持仓最相关的 3–8 条）
-    - 已经完成最简单的版本，详见src/tools/news.py
 2. 事件卡结构化（一句话、影响链条、观察点）
 3. 组合暴露画像（行业/地区/币种/单票集中度）
 4. 组合指导（以再平衡/风险控制/关注清单为主）
 5. 跟踪清单：把“观察点”变成提醒（比如财报、数据发布、价格/利率阈值）
-    - 实现可以用openbb拉取**价格**、**财报**等数据
 
 ---
 
@@ -48,41 +46,66 @@ python run.py
 
 ## 主要模块说明
 
-### `run.py`
-入口脚本，加载配置并执行日报。适合本地跑通 pipeline。
+daily-report/
+├─ pyproject.toml                 # 推荐用 Poetry/uv/pip-tools 管理依赖
+├─ README.md
+├─ .env.example                   # 环境变量示例（不放密钥）
+├─ config/
+│  ├─ config.toml                 # 默认配置（可多环境拆分）
+│  ├─ config.dev.toml
+│  └─ config.prod.toml
+├─ data/
+│  ├─ portfolios/
+│  │  └─ default.json             # 持仓模板（可多个组合）
+│  └─ cache/                      # 可选：行情/新闻缓存
+├─ outputs/
+│  └─ ...                         # 生成的日报（gitignore）
+├─ scripts/
+│  └─ run_local.py                # 仅本地调试脚本（可选）
+├─ src/
+│  └─ daily_report/
+│     ├─ __init__.py
+│     ├─ cli.py                   # ✅ 统一入口（取代 run.py）
+│     ├─ config/
+│     │  ├─ __init__.py
+│     │  └─ loader.py             # 读取 toml + env 覆盖
+│     ├─ pipeline/
+│     │  ├─ __init__.py
+│     │  ├─ graph.py              # “日报 graph 接口”
+│     │  └─ orchestrator.py       # 主流程编排
+│     ├─ domain/
+│     │  ├─ __init__.py
+│     │  ├─ models.py             # Portfolio/Position/Report 等数据模型（dataclass/pydantic）
+│     │  └─ schema.py             # LLM 输出 JSON schema / 校验逻辑
+│     ├─ providers/
+│     │  ├─ __init__.py
+│     │  ├─ market/
+│     │  │  ├─ __init__.py
+│     │  │  └─ stooq.py           # 行情源实现
+│     │  └─ news/
+│     │     ├─ __init__.py
+│     │     └─ gdelt.py           # 新闻源实现
+│     ├─ analysis/
+│     │  ├─ __init__.py
+│     │  └─ risk.py               # 波动率/回撤/收益等
+│     ├─ llm/
+│     │  ├─ __init__.py
+│     │  ├─ client.py             # OpenAI-compatible client
+│     │  └─ prompts/
+│     │     └─ daily_report.md
+│     ├─ render/
+│     │  ├─ __init__.py
+│     │  ├─ renderer.py           # 渲染 Markdown / 模板
+│     │  └─ templates/
+│     │     └─ daily_report.md    # ✅ 建议把“模板”与“prompt”分开
+│     └─ utils/
+│        ├─ __init__.py
+│        └─ logging.py            # 日志、重试、通用工具
+└─ tests/
+   ├─ test_risk.py
+   ├─ test_news_gdelt.py
+   └─ test_pipeline_smoke.py
 
-### `src/agent/config.py`
-读取 `config/config.toml`，并允许环境变量覆盖。
-
-### `src/agent/graph.py`
-日报 graph 接口：支持最小报表或完整日报。
-
-### `src/agent/orchestrator.py`
-日报主流程编排（组合 → 行情/新闻 → 风险 → LLM → 渲染）。
-
-### `src/tools/market_data.py`
-行情数据抓取。目前支持 `stooq` 免费日线。
-
-### `src/tools/news.py`
-新闻数据抓取（GDELT）。
-
-### `src/analysis/risk.py`
-计算波动率、最大回撤、平均收益等指标，并生成组合快照。
-
-### `src/llm/client.py`
-通过 OpenAI-compatible API 生成结构化 JSON 报告。
-
-### `src/llm/prompts/daily_report.md`
-日报 Prompt 模板，要求 LLM 输出严格 JSON。
-
-### `src/render/render.py`
-渲染 Markdown 模板并写入输出目录。
-
-### `data/portfolio.json`
-你的持仓模板，供 pipeline 读取。
-
-### `config/config.toml`
-总配置文件（行情源、LLM、输出路径等）。
 
 ---
 
