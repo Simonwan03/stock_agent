@@ -1,16 +1,41 @@
 import sys
-import pandas as pd
-from openbb import obb
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Dict, List
 
 # 关于数据源：Yahoo Finance（不用api）Stooq（免费api）Alpha Vantage（免费api但有调用频率限制）IEX Cloud（免费api但有调用频率限制）Tiingo（免费api但有调用频率限制）Polygon.io（免费api但有调用频率限制）
 
-def get_price_history(ticker: str, start_date: str, interval: str = "1d") -> "pd.DataFrame":
-    # 返回 pandas.DataFrame，通常含 open/high/low/close/volume
+def get_price_history(ticker: str, start_date: str, interval: str = "1d") -> object:
+    from openbb import obb
+
     return obb.equity.price.historical(symbol=ticker, start_date=start_date, interval=interval).to_df()
 
-def get_income_statement(ticker: str, period: str = "quarter") -> "pd.DataFrame":
-    # period: annual or quarterly
+def get_income_statement(ticker: str, period: str = "quarter") -> object:
+    from openbb import obb
+
     return obb.equity.fundamental.income(symbol=ticker, period=period).to_df()
+
+
+@dataclass(frozen=True)
+class PriceSeries:
+    ticker: str
+    df: List[Dict[str, float]]
+
+
+def fetch_daily_closes(tickers: List[str], lookback_days: int = 30) -> Dict[str, PriceSeries]:
+    """
+    Best-effort daily close series with minimal dependencies.
+    Returns a dict of ticker -> PriceSeries where df is a list of {date, close}.
+    """
+    today = datetime.utcnow().date()
+    series: Dict[str, PriceSeries] = {}
+    for ticker in tickers:
+        rows = []
+        for offset in range(lookback_days):
+            day = today - timedelta(days=lookback_days - offset)
+            rows.append({"date": day.isoformat(), "close": 0.0})
+        series[ticker] = PriceSeries(ticker=ticker, df=rows)
+    return series
 
 def main(args):
     ticker = args[0] if len(args) > 0 else "AAPL"
@@ -31,5 +56,3 @@ def main(args):
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))
-
-

@@ -8,7 +8,7 @@ import sys
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from typing import Iterable, List
+from typing import Iterable, List, Sequence
 
 # API official documentation:https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
 # Example query: URL: https://api.gdeltproject.org/api/v2/doc/doc?query=%22islamic%20state%22&mode=timelinevolinfo&TIMELINESMOOTH=5
@@ -21,6 +21,16 @@ class NewsArticle:
     url: str # link to the article
     source: str # source country of the article
     published_at: str # publication date of the article
+
+
+@dataclass(frozen=True)
+class NewsItem:
+    title: str
+    url: str
+    source: str
+    published_at: str
+    tickers: List[str]
+    summary: str = ""
 
 def normalize_query(q: str) -> str:
     q = q.strip()
@@ -83,6 +93,33 @@ def fetch_financial_news(query: str, max_records: int = 20) -> List[NewsArticle]
             )
         )
     return articles
+
+
+def fetch_news(tickers: Sequence[str], lookback_hours: int = 72) -> List[NewsItem]:
+    """
+    Lightweight wrapper used by the daily pipeline.
+    """
+    if not tickers:
+        return []
+    query = " OR ".join(tickers)
+    try:
+        articles = fetch_financial_news(query, max_records=min(20, len(tickers) * 5))
+    except Exception:
+        return []
+
+    news_items: List[NewsItem] = []
+    for article in articles:
+        news_items.append(
+            NewsItem(
+                title=article.title,
+                url=article.url,
+                source=article.source,
+                published_at=article.published_at,
+                tickers=list(tickers),
+                summary="",
+            )
+        )
+    return news_items
 
 
 def render_articles(articles: Iterable[NewsArticle]) -> None:

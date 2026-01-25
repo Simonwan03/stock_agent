@@ -1,6 +1,26 @@
 import os
-from dotenv import load_dotenv
-from agent.graph import build_graph
+import sys
+from pathlib import Path
+from typing import Optional
+
+
+def load_dotenv(path: Optional[Path] = None) -> None:
+    env_path = path or Path(".env")
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip())
+
+ROOT = Path(__file__).resolve().parent
+SRC_PATH = ROOT / "src"
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
+from agent.graph import build_graph  # noqa: E402
 
 def main():
     load_dotenv()
