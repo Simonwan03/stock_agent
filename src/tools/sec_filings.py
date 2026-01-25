@@ -1,13 +1,16 @@
 import os
-from edgar import Company, set_identity
 
 def init_sec_identity():
     ua = os.getenv("SEC_USER_AGENT", "").strip()
     if ua:
+        from edgar import set_identity
+
         set_identity(ua)
 
 def get_latest_filing_text(ticker: str, form: str = "10-Q") -> str:
     init_sec_identity()
+    from edgar import Company
+
     c = Company(ticker)
     filings = c.get_filings(form=form)
     latest = filings.latest()

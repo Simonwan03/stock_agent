@@ -1,0 +1,19 @@
+{
+  "holdings": [
+    {
+      "ticker": "AAPL",
+      "shares": 12
+    },
+    {
+      "ticker": "MSFT",
+      "shares": 8
+    },
+    {
+      "ticker": "TSLA",
+      "shares": 5
+    }
+  ],
+  "benchmarks": [
+    "SPY"
+  ]
+}

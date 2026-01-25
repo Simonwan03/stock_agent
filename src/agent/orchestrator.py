@@ -7,14 +7,14 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List
 
-from stock_agent.src.agent.config import Settings
-from stock_agent.src.portfolio.store import load_portfolio
-from stock_agent.src.tools.market_data import fetch_daily_closes
-from stock_agent.src.tools.news import fetch_news, NewsItem
-from stock_agent.src.analysis.risk import risk_metrics, compute_portfolio_snapshot
-from stock_agent.src.llm.client import LLMClient
-from stock_agent.src.llm.schemas import DailyReport
-from stock_agent.src.render.render import render_markdown, write_text
+from agent.config import Settings
+from analysis.risk import compute_portfolio_snapshot, risk_metrics
+from llm.client import LLMClient
+from llm.schemas import DailyReport
+from portfolio.store import load_portfolio
+from render.render import render_markdown, write_text
+from tools.market_data import fetch_daily_closes
+from tools.news import NewsItem, fetch_news
 
 
 def _news_to_digest(items: List[NewsItem]) -> List[Dict[str, Any]]:
@@ -36,6 +36,28 @@ def _news_to_digest(items: List[NewsItem]) -> List[Dict[str, Any]]:
     return out
 
 
+def _extract_close_series(prices: Any) -> List[float]:
+    if prices is None:
+        return []
+    if isinstance(prices, list):
+        if prices and isinstance(prices[0], dict) and "close" in prices[0]:
+            return [row["close"] for row in prices if "close" in row]
+        return [float(x) for x in prices]
+    if hasattr(prices, "get"):
+        try:
+            closes = prices.get("close")
+            if closes is not None:
+                return list(closes)
+        except Exception:
+            pass
+    if hasattr(prices, "__iter__"):
+        try:
+            return list(prices)
+        except Exception:
+            return []
+    return []
+
+
 def run_daily(portfolio_path: str, settings: Settings) -> str:
     """
     主入口：生成当日组合日报，返回 markdown 输出文件路径。
@@ -53,7 +75,11 @@ def run_daily(portfolio_path: str, settings: Settings) -> str:
         raise ValueError("portfolio.holdings 为空：请在 portfolio.json 里填入持仓。")
 
     # 2) 数据采集（此处由 tools 层负责具体实现）
-    price_series = fetch_daily_closes(all_tickers, lookback_days=settings.price_lookback_days)
+    price_series = fetch_daily_closes(
+        all_tickers,
+        lookback_days=settings.price_lookback_days,
+        provider=settings.market_data_provider,
+    )
     news_items = fetch_news(tickers, lookback_hours=settings.news_lookback_hours)
 
     # 3) 计算指标（量化侧）
@@ -65,7 +91,7 @@ def run_daily(portfolio_path: str, settings: Settings) -> str:
     # 每个持仓：年化波动、最大回撤等
     per_ticker_risk: Dict[str, Any] = {}
     for t in tickers:
-        close = prices_df[t]["close"]
+        close = _extract_close_series(prices_df[t])
         per_ticker_risk[t] = risk_metrics(close)
 
     # 4) 打包给 LLM 的输入（严格 JSON）
@@ -78,7 +104,8 @@ def run_daily(portfolio_path: str, settings: Settings) -> str:
     }
 
     # 5) LLM 合成结构化报告（JSON -> pydantic 校验）
-    prompt_path = Path(__file__).with_name("llm").joinpath("prompts", "daily_report.md")
+    project_root = Path(__file__).resolve().parents[1]
+    prompt_path = project_root / "llm" / "prompts" / "daily_report.md"
     prompt_tpl = prompt_path.read_text(encoding="utf-8")
     prompt = prompt_tpl.replace("{{INPUT_JSON}}", json.dumps(payload, ensure_ascii=False))
 
@@ -86,7 +113,7 @@ def run_daily(portfolio_path: str, settings: Settings) -> str:
     report: DailyReport = llm.generate_structured(prompt, DailyReport)
 
     # 6) 渲染与落盘
-    template_dir = str(Path(__file__).with_name("render").joinpath("templates"))
+    template_dir = str(project_root / "render" / "templates")
     md = render_markdown(template_dir, "daily_report.md.j2", report.model_dump())
 
     out_dir = Path(settings.outputs_dir)
