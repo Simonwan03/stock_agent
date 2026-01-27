@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stock-agent"
+version = "0.1.0"
+description = "Personal investor stock market analysis agent."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "stock_agent contributors" }
+]
+dependencies = [
+  "pandas>=1.5",
+  "pydantic>=1.10,<3",
+]
+
+[project.optional-dependencies]
+openbb = ["openbb>=4.0"]
+sec = ["edgartools>=2.0"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
