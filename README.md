@@ -69,6 +69,7 @@ export STOCK_AGENT_LLM_API_KEY=your_key
 export STOCK_AGENT_LLM_MODEL=deepseek-chat
 export STOCK_AGENT_LLM_ENABLED=1
 export STOCK_AGENT_LLM_TIMEOUT=60
+```
 
 ### LLM 配置（config/config.toml）
 ```toml
@@ -77,7 +78,6 @@ base_url = "https://api.deepseek.com"
 api_key = "sk-***"
 model = "deepseek-chat"
 timeout = 60
-```
 ```
 
 ---
