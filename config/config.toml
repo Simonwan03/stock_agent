@@ -1,8 +1,10 @@
 [llm]
 # OpenAI-compatible base URL. Example: https://api.openai.com/v1 or https://api.deepseek.com/v1
 base_url = "https://api.deepseek.com"
-api_key = "sk-1fd7f385ae6549a7b2891a7eed1d226d"
-model = "deepseek-chat"
+api_key = "sk-***"
+model = "deepseek-reasoner"
+timeout = 60
+timeout = 90
 
 [market_data]
 # Supported: "stooq" (no API key, free)

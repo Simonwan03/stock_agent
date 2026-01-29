@@ -3,7 +3,7 @@
   "period": "quarter",
   "limit": 4,
   "provider": "yfinance",
-  "retrieved_at": "2026-01-29T21:16:06Z",
+  "retrieved_at": "2026-01-29T22:43:01Z",
   "statements": {
     "income": {
       "period_ending": [

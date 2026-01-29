@@ -1,122 +1,273 @@
-[
-  {
-    "title": "Tech earnings: AI spending moderation could prove detrimental",
-    "url": "https://finance.yahoo.com/video/tech-earnings-ai-spending-moderation-could-prove-detrimental-205430937.html",
-    "source": "Yahoo Finance Video",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "Earnings season is off to another busy week as Magnificent Seven companies prepare to release quarterly earnings results: Microsoft (MSFT), Meta Platforms (META), and Tesla (TSLA) coming out on Wednesday, and Apple (AAPL) on Thursday.The S&P 500 (^GSPC) inches closer to a record milestone of 7,000 amid investor anticipation.Washington Crossing Advisors Senior Portfolio Manager Chad Morganlander comes on Market Domination to talk more about the ROIC figures (Return on Invested Capital) that he expects to see from the AI hyperscalers this week.To watch more expert insights and analysis on the latest market action, check out more&nbsp;Market Domination."
+{
+  "symbol": "AAPL",
+  "window_trading_days": 30,
+  "asof_utc": "2026-01-29T22:42:53Z",
+  "providers": {
+    "price": "yfinance",
+    "metrics": "yfinance",
+    "trailing_dividend_yield": null
   },
-  {
-    "title": "Samsung's Galaxy Z TriFold to cost $2,899",
-    "url": "https://finance.yahoo.com/video/samsungs-galaxy-z-trifold-to-cost-2899-213408405.html",
-    "source": "Yahoo Finance Video",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "Samsung says its new Galaxy Z TriFold phone will cost $2,899 in the US. Yahoo Finance Tech Editor Dan Howley explains why the price tag is so high. He also discusses the possibility of Apple (AAPL) announcing a foldable phone.To watch more expert insights and analysis on the latest market action, check out more Market Domination."
+  "prices": [
+    {
+      "date": "2025-12-16",
+      "open": 272.82000732421875,
+      "close": 274.6099853515625,
+      "high": 275.5,
+      "low": 271.7900085449219,
+      "volume": 37648600.0
+    },
+    {
+      "date": "2025-12-17",
+      "open": 275.010009765625,
+      "close": 271.8399963378906,
+      "high": 276.1600036621094,
+      "low": 271.6400146484375,
+      "volume": 50138700.0
+    },
+    {
+      "date": "2025-12-18",
+      "open": 273.6099853515625,
+      "close": 272.19000244140625,
+      "high": 273.6300048828125,
+      "low": 266.95001220703125,
+      "volume": 51630700.0
+    },
+    {
+      "date": "2025-12-19",
+      "open": 272.1499938964844,
+      "close": 273.6700134277344,
+      "high": 274.6000061035156,
+      "low": 269.8999938964844,
+      "volume": 144632000.0
+    },
+    {
+      "date": "2025-12-22",
+      "open": 272.8599853515625,
+      "close": 270.9700012207031,
+      "high": 273.8800048828125,
+      "low": 270.510009765625,
+      "volume": 36571800.0
+    },
+    {
+      "date": "2025-12-23",
+      "open": 270.8399963378906,
+      "close": 272.3599853515625,
+      "high": 272.5,
+      "low": 269.55999755859375,
+      "volume": 29642000.0
+    },
+    {
+      "date": "2025-12-24",
+      "open": 272.3399963378906,
+      "close": 273.80999755859375,
+      "high": 275.42999267578125,
+      "low": 272.20001220703125,
+      "volume": 17910600.0
+    },
+    {
+      "date": "2025-12-26",
+      "open": 274.1600036621094,
+      "close": 273.3999938964844,
+      "high": 275.3699951171875,
+      "low": 272.8599853515625,
+      "volume": 21521800.0
+    },
+    {
+      "date": "2025-12-29",
+      "open": 272.69000244140625,
+      "close": 273.760009765625,
+      "high": 274.3599853515625,
+      "low": 272.3500061035156,
+      "volume": 23715200.0
+    },
+    {
+      "date": "2025-12-30",
+      "open": 272.80999755859375,
+      "close": 273.0799865722656,
+      "high": 274.0799865722656,
+      "low": 272.2799987792969,
+      "volume": 22139600.0
+    },
+    {
+      "date": "2025-12-31",
+      "open": 273.05999755859375,
+      "close": 271.8599853515625,
+      "high": 273.67999267578125,
+      "low": 271.75,
+      "volume": 27293600.0
+    },
+    {
+      "date": "2026-01-02",
+      "open": 272.260009765625,
+      "close": 271.010009765625,
+      "high": 277.8399963378906,
+      "low": 269.0,
+      "volume": 37838100.0
+    },
+    {
+      "date": "2026-01-05",
+      "open": 270.6400146484375,
+      "close": 267.260009765625,
+      "high": 271.510009765625,
+      "low": 266.1400146484375,
+      "volume": 45647200.0
+    },
+    {
+      "date": "2026-01-06",
+      "open": 267.0,
+      "close": 262.3599853515625,
+      "high": 267.54998779296875,
+      "low": 262.1199951171875,
+      "volume": 52352100.0
+    },
+    {
+      "date": "2026-01-07",
+      "open": 263.20001220703125,
+      "close": 260.3299865722656,
+      "high": 263.67999267578125,
+      "low": 259.80999755859375,
+      "volume": 48309800.0
+    },
+    {
+      "date": "2026-01-08",
+      "open": 257.0199890136719,
+      "close": 259.0400085449219,
+      "high": 259.2900085449219,
+      "low": 255.6999969482422,
+      "volume": 50419300.0
+    },
+    {
+      "date": "2026-01-09",
+      "open": 259.0799865722656,
+      "close": 259.3699951171875,
+      "high": 260.2099914550781,
+      "low": 256.2200012207031,
+      "volume": 39997000.0
+    },
+    {
+      "date": "2026-01-12",
+      "open": 259.1600036621094,
+      "close": 260.25,
+      "high": 261.29998779296875,
+      "low": 256.79998779296875,
+      "volume": 45263800.0
+    },
+    {
+      "date": "2026-01-13",
+      "open": 258.7200012207031,
+      "close": 261.04998779296875,
+      "high": 261.80999755859375,
+      "low": 258.3900146484375,
+      "volume": 45730800.0
+    },
+    {
+      "date": "2026-01-14",
+      "open": 259.489990234375,
+      "close": 259.9599914550781,
+      "high": 261.82000732421875,
+      "low": 256.7099914550781,
+      "volume": 40019400.0
+    },
+    {
+      "date": "2026-01-15",
+      "open": 260.6499938964844,
+      "close": 258.2099914550781,
+      "high": 261.0400085449219,
+      "low": 257.04998779296875,
+      "volume": 39388600.0
+    },
+    {
+      "date": "2026-01-16",
+      "open": 257.8999938964844,
+      "close": 255.52999877929688,
+      "high": 258.8999938964844,
+      "low": 254.92999267578125,
+      "volume": 72142800.0
+    },
+    {
+      "date": "2026-01-20",
+      "open": 252.72999572753906,
+      "close": 246.6999969482422,
+      "high": 254.7899932861328,
+      "low": 243.4199981689453,
+      "volume": 80267500.0
+    },
+    {
+      "date": "2026-01-21",
+      "open": 248.6999969482422,
+      "close": 247.64999389648438,
+      "high": 251.55999755859375,
+      "low": 245.17999267578125,
+      "volume": 54641700.0
+    },
+    {
+      "date": "2026-01-22",
+      "open": 249.1999969482422,
+      "close": 248.35000610351562,
+      "high": 251.0,
+      "low": 248.14999389648438,
+      "volume": 39708300.0
+    },
+    {
+      "date": "2026-01-23",
+      "open": 247.32000732421875,
+      "close": 248.0399932861328,
+      "high": 249.41000366210938,
+      "low": 244.67999267578125,
+      "volume": 41689000.0
+    },
+    {
+      "date": "2026-01-26",
+      "open": 251.47999572753906,
+      "close": 255.41000366210938,
+      "high": 256.55999755859375,
+      "low": 249.8000030517578,
+      "volume": 55969200.0
+    },
+    {
+      "date": "2026-01-27",
+      "open": 259.1700134277344,
+      "close": 258.2699890136719,
+      "high": 261.95001220703125,
+      "low": 258.2099914550781,
+      "volume": 49648300.0
+    },
+    {
+      "date": "2026-01-28",
+      "open": 257.6499938964844,
+      "close": 256.44000244140625,
+      "high": 258.8599853515625,
+      "low": 254.50999450683594,
+      "volume": 41288000.0
+    },
+    {
+      "date": "2026-01-29",
+      "open": 258.07000732421875,
+      "close": 258.2799987792969,
+      "high": 259.6499938964844,
+      "low": 254.41000366210938,
+      "volume": 55636341.0
+    }
+  ],
+  "fundamentals_latest": {
+    "market_cap": 3816436269056.0,
+    "pe_ratio": 34.621983,
+    "forward_pe": 28.252178,
+    "enterprise_to_ebitda": 26.577,
+    "enterprise_to_revenue": 9.244,
+    "price_to_book": 51.749146,
+    "revenue_growth": 0.079,
+    "earnings_growth": 0.912,
+    "gross_margin": 0.46905,
+    "operating_margin": 0.31647,
+    "profit_margin": 0.26915002,
+    "return_on_equity": 1.7142199,
+    "debt_to_equity": 152.411,
+    "current_ratio": 0.893,
+    "dividend_yield": 0.41,
+    "payout_ratio": 0.1367,
+    "beta": 1.093,
+    "price_return_1y": 0.07933831
   },
-  {
-    "title": "Strong iPhone sales to power Apple's holiday quarter, Google AI deal in focus",
-    "url": "https://finance.yahoo.com/news/strong-iphone-sales-power-apples-102033119.html",
-    "source": "Reuters",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "By Akash Sriram Jan 28 (Reuters) - Apple is set to report its strongest iPhone sales growth in four years on Thursday, driven by robust demand for its premium Pro models as it prepares to roll out"
-  },
-  {
-    "title": "Apple’s Gemini AI Deal And China Risks Weigh On Valuation",
-    "url": "https://finance.yahoo.com/news/apple-gemini-ai-deal-china-111152846.html",
-    "source": "Simply Wall St.",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "Apple (NasdaqGS:AAPL) has agreed a partnership with Alphabet to use its Gemini AI model to power an upgraded Siri and other AI features. The Gemini powered capabilities are expected to sit at the center of Apple's next wave of on device and cloud based AI services. Separately, a shareholder proposal is urging Apple to publish a report on risks tied to its business exposure to China. Apple, trading at $258.27, has had a mixed share price record recently, with a 4.7% gain over the past week..."
-  },
-  {
-    "title": "US megacap results to test market's tech trade, profit optimism",
-    "url": "https://finance.yahoo.com/news/us-megacap-results-test-markets-111936351.html",
-    "source": "Reuters",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "Stakes are high for earnings reports from U.S. megacap companies this week, as investors seek proof that strong profit growth will lift stocks this year, including evidence that artificial-intelligence investments are paying off.  Reports are due from Microsoft, Apple, Facebook parent ​Meta Platforms and Tesla - four of the \"Magnificent Seven\" megacap companies whose bottom-line results broadly are key drivers of overall U.S. profits.  The group is expected ‌to post a 21.5% rise in earnings for the quarter, compared with a 5.3% gain for the rest of the S&P 500, according to Tajinder Dhillon, head of earnings research at LSEG."
-  },
-  {
-    "title": "Alphabet Faces EU DMA Scrutiny While Gemini Powers Apple Siri",
-    "url": "https://finance.yahoo.com/news/alphabet-faces-eu-dma-scrutiny-122115260.html",
-    "source": "Simply Wall St.",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "The European Commission has opened formal compliance proceedings against Google under the Digital Markets Act to review how it treats rival AI and search services. At the same time, Google has agreed with Apple to integrate its Gemini AI model as the default intelligence behind Siri. These developments arrive as Alphabet (NasdaqGS:GOOGL) continues to refine its role in global search, mobile ecosystems, and AI platforms. For investors watching Alphabet at a share price of $334.55, the..."
-  },
-  {
-    "title": "Jim Cramer on Apple: “Anyone Who Makes Phones or Computers Is a Victim of the Memory Shortage”",
-    "url": "https://finance.yahoo.com/news/jim-cramer-apple-anyone-makes-122337117.html",
-    "source": "Insider Monkey",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "Apple Inc. (NASDAQ:AAPL) is one of the stocks Jim Cramer discussed, along with market shortages. Cramer highlighted the stock’s constant decline for the past few weeks, as he said: Now, last night I told you that the Intel breakage would reverse the huge flow of money out of Magnificent Seven into the storage plays, and […]"
-  },
-  {
-    "title": "Corning forecasts first-quarter sales above estimates on strong optical fiber demand",
-    "url": "https://finance.yahoo.com/news/corning-forecasts-first-quarter-sales-123611942.html",
-    "source": "Reuters",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "Corning on Wednesday forecast first-quarter sales above estimates, boosted by resilient ​demand for its fiber‑optic products, which generate ‌nearly 40% of the company's revenue.  The Gorilla Glass maker, ‌a key supplier to Apple, has stepped up investment in its optical communications business as major technology companies race to expand data‑center infrastructure to ⁠support rising AI ‌workloads.  On Tuesday, Corning inked an up to $6 billion multi‑year deal with Meta ‍Platforms to supply fiber‑optic cables for the social media giant's AI‑focused data centers."
-  },
-  {
-    "title": "Will the Russell 2000 Continue to Outperform the S&P 500?",
-    "url": "https://finance.yahoo.com/news/russell-2000-continue-outperform-p-130009641.html",
-    "source": "Schaeffer's Investment Research",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "Examining whether or not small-cap outperformance tends to hold longer term"
-  },
-  {
-    "title": "Earnings live: Starbucks stock pops, GE Vernova slips, ASML surges",
-    "url": "https://finance.yahoo.com/news/live/earnings-live-starbucks-stock-pops-ge-vernova-slips-asml-surges-133036401.html",
-    "source": "Yahoo Finance",
-    "domain": "",
-    "published_at": "",
-    "tickers": [
-      "AAPL"
-    ],
-    "provider": "openbb:yfinance",
-    "text": "The fourth quarter earnings season kicks into high gear this week, with Big Tech results from Microsoft, Meta, Tesla, and Apple headlining the earnings calendar."
-  }
-]
+  "trailing_dividend_yield_series": []
+}

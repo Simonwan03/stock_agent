@@ -5,6 +5,7 @@ Indicators toolkit + CLI.
 
 Usage examples:
   python src/tools/indicators.py --prices outputs/AAPL.json --out outputs/aapl_indicators.json
+  python src/tools/indicators.py --ticker AAPL --outputs-dir src/tools/outputs --out src/tools/outputs/aapl_indicators.json
   python src/tools/indicators.py --prices prices.csv --benchmark spy.csv --latest-only
   python src/tools/indicators.py --financials outputs/openbb_financials_AAPL_quarter_yfinance_income-balance-cash.json
 """
@@ -611,9 +612,94 @@ def _json_dump(payload: Any) -> str:
     return json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default)
 
 
+def _infer_ticker_from_stem(stem: str) -> Optional[str]:
+    if not stem:
+        return None
+    base = stem.split("_", 1)[0]
+    return base if base.isalpha() else None
+
+
+def _is_prices_payload(path: Path) -> bool:
+    try:
+        raw = _load_json(str(path))
+    except Exception:
+        return False
+    if isinstance(raw, dict) and isinstance(raw.get("prices"), list):
+        return True
+    if isinstance(raw, list):
+        return True
+    return False
+
+
+def _find_latest_prices_file(outputs_dir: Path, ticker: str) -> Optional[Path]:
+    patterns = [
+        f"{ticker.upper()}.json",
+        f"{ticker.lower()}.json",
+        f"{ticker.upper()}_*.json",
+        f"{ticker.lower()}_*.json",
+    ]
+    matches: List[Path] = []
+    for pattern in patterns:
+        matches.extend(outputs_dir.glob(pattern))
+    matches = [m for m in matches if m.is_file() and _is_prices_payload(m)]
+    if not matches:
+        return None
+    return max(matches, key=lambda p: p.stat().st_mtime)
+
+
+def _default_outputs_dir(outputs_dir: str) -> Path:
+    if outputs_dir:
+        return Path(outputs_dir)
+    repo_outputs = Path("src/tools/outputs")
+    if repo_outputs.exists():
+        return repo_outputs
+    return Path("outputs")
+
+
+def _resolve_prices_path(prices_arg: str, ticker: str, outputs_dir: str) -> str:
+    if not prices_arg:
+        if not ticker:
+            return ""
+        out_dir = _default_outputs_dir(outputs_dir)
+        latest = _find_latest_prices_file(out_dir, ticker)
+        if not latest:
+            raise SystemExit(f"No prices file found for ticker {ticker} in {out_dir}.")
+        return str(latest)
+
+    path = Path(prices_arg)
+    if path.exists():
+        if path.is_dir():
+            if not ticker:
+                raise SystemExit("--prices points to a directory; use --ticker to resolve a file.")
+            latest = _find_latest_prices_file(path, ticker)
+            if not latest:
+                raise SystemExit(f"No prices file found for ticker {ticker} in {path}.")
+            return str(latest)
+        return str(path)
+
+    inferred = ticker or _infer_ticker_from_stem(path.stem)
+    search_dirs: List[Path] = []
+    if path.parent and path.parent != Path("."):
+        search_dirs.append(path.parent)
+    out_dir = _default_outputs_dir(outputs_dir)
+    if out_dir not in search_dirs:
+        search_dirs.append(out_dir)
+    if inferred:
+        for directory in search_dirs:
+            if not directory.exists():
+                continue
+            latest = _find_latest_prices_file(directory, inferred)
+            if latest:
+                return str(latest)
+
+    raise SystemExit(f"Prices file not found: {prices_arg}")
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Compute technical indicators, risk metrics, and financial ratios.")
     p.add_argument("--prices", default="", help="Prices JSON/CSV path. JSON list[dict] or dict with 'prices'.")
+    p.add_argument("--ticker", default="", help="Ticker symbol to auto-resolve latest prices file.")
+    p.add_argument("--outputs-dir", default="", help="Outputs directory for auto-resolving prices file.")
     p.add_argument("--benchmark", default="", help="Benchmark prices JSON/CSV path.")
     p.add_argument("--financials", default="", help="OpenBB financials JSON path.")
     p.add_argument("--latest-only", action="store_true", help="Only keep the latest row for time-series outputs.")
@@ -626,13 +712,14 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    if not args.prices and not args.financials:
-        raise SystemExit("Need --prices and/or --financials.")
+    if not args.prices and not args.financials and not args.ticker:
+        raise SystemExit("Need --prices and/or --financials (or --ticker for auto-resolve).")
 
     output: Dict[str, Any] = {}
 
-    if args.prices:
-        prices_df = _prepare_prices_df(_load_prices_df(args.prices))
+    prices_path = _resolve_prices_path(args.prices, args.ticker, args.outputs_dir)
+    if prices_path:
+        prices_df = _prepare_prices_df(_load_prices_df(prices_path))
         tech_df = compute_technical_indicators(prices_df)
         if args.latest_only and not tech_df.empty:
             tech_df = tech_df.tail(1)

@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 
 SCHEMA_VERSION = "1.0"
+ADVICE_SCHEMA_VERSION = "1.0"
 
 
 def utc_now_iso() -> str:
@@ -67,4 +68,31 @@ def build_pipeline_output(
         "asof_utc": asof_utc or utc_now_iso(),
         "modules": modules,
         "advice": advice,
+    }
+
+
+def build_advice_output(
+    ticker: str,
+    summary: str,
+    signals: List[str],
+    risk_notes: List[str],
+    action_items: List[str],
+    stance: str,
+    confidence: str,
+    time_horizon: str,
+    agent: str = "advisor",
+    asof_utc: Optional[str] = None,
+) -> Dict[str, Any]:
+    return {
+        "schema_version": ADVICE_SCHEMA_VERSION,
+        "agent": agent,
+        "ticker": ticker,
+        "asof_utc": asof_utc or utc_now_iso(),
+        "summary": summary,
+        "signals": signals,
+        "risk_notes": risk_notes,
+        "action_items": action_items,
+        "stance": stance,
+        "confidence": confidence,
+        "time_horizon": time_horizon,
     }

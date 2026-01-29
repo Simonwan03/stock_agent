@@ -344,8 +344,7 @@ def save_equity_json(
     out_path.mkdir(parents=True, exist_ok=True)
 
     symbol = str(payload.get("symbol") or "equity").upper()
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    fname = filename or f"{symbol}_{ts}.json"
+    fname = filename or f"{symbol}.json"
 
     file_path = out_path / fname
     with file_path.open("w", encoding="utf-8") as f:

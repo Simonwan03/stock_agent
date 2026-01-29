@@ -418,9 +418,14 @@ def save_news_json(
 
     tickers_key = "_".join([t.upper() for t in tickers if t]) or "NEWS"
     ts = _utc_now().strftime("%Y%m%dT%H%M%SZ")
-    fname = filename or f"{tickers_key}_{ts}.json"
+    fname = filename or f"{tickers_key}_news_{ts}.json"
 
-    file_path = out_path / fname
+    fname_path = Path(fname)
+    if fname_path.is_absolute() or fname_path.parent != Path("."):
+        file_path = fname_path
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        file_path = out_path / fname
     with file_path.open("w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
     return file_path
@@ -433,10 +438,14 @@ def _parse_args(argv: List[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Fetch merged FREE news (OpenBB yfinance + GDELT allowlist).")
     p.add_argument("--tickers", nargs="+", default=["AAPL"], help="Tickers, e.g. AAPL MSFT")
     p.add_argument("--lookback_hours", type=int, default=72)
-    p.add_argument("--max", type=int, default=20)
+    p.add_argument("--max", type=int, default=20, help="Max items to return (alias: --limit).")
+    p.add_argument("--limit", type=int, default=None, help="Alias for --max.")
     p.add_argument("--out_dir", default="outputs", help="Output directory (default: outputs)")
     p.add_argument("--out", default="", help="Output filename (.json). If empty, a timestamped name is used.")
-    return p.parse_args(argv)
+    args = p.parse_args(argv)
+    if args.limit is not None:
+        args.max = args.limit
+    return args
 
 
 def main(argv: List[str]) -> int:
