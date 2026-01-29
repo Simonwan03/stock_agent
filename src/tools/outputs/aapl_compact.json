@@ -1,0 +1,199 @@
+{
+  "ticker": "AAPL",
+  "period": "quarter",
+  "provider": "yfinance",
+  "retrieved_at": "2026-01-29T21:16:06Z",
+  "asof": "2025-09-30",
+  "periods": [
+    "2025-09-30",
+    "2025-06-30",
+    "2025-03-31",
+    "2024-12-31"
+  ],
+  "key_metrics": {
+    "revenue": {
+      "latest": 102466000000.0,
+      "qoq": 0.08964651835467263,
+      "ttm": 416161000000.0
+    },
+    "eps": {
+      "latest": 1.85,
+      "qoq": 0.17834394904458595
+    },
+    "gross_margin": {
+      "latest": 0.47177600374758455
+    },
+    "op_margin": {
+      "latest": 0.3164659496808698
+    },
+    "net_margin": {
+      "latest": 0.2680498897195167
+    },
+    "fcf": {
+      "latest": 26486000000.0,
+      "qoq": 0.08526941200573646,
+      "ttm": 98767000000.0
+    },
+    "fcf_margin": {
+      "latest": 0.2584857416118517
+    },
+    "shareholder_return": {
+      "buyback_ttm": 90711000000.0,
+      "dividends_ttm": 15421000000.0,
+      "total_ttm": 106132000000.0,
+      "vs_fcf_ttm": 1.0745694412101208
+    },
+    "net_debt": {
+      "latest": 62723000000.0,
+      "qoq": -0.04135780769994957
+    },
+    "operating_cash_flow": {
+      "latest": 29728000000.0
+    },
+    "capex": {
+      "latest": -3242000000.0
+    }
+  },
+  "watch_items": [
+    {
+      "item": "Accounts receivable spike",
+      "latest": 39777000000.0,
+      "prev": 27557000000.0,
+      "qoq": 0.4434444968610516,
+      "hint": "可能是季节性出货/回款节奏变化；建议结合管理层 commentary 或 DSO 指标确认。"
+    },
+    {
+      "item": "Shareholder returns exceed FCF (TTM)",
+      "ratio": 1.0745694412101208,
+      "hint": "回购+分红超过自由现金流，通常依赖现金储备/负债配合；若 FCF 下滑，回购强度可能下调。"
+    }
+  ],
+  "raw_core": {
+    "income": [
+      {
+        "period_ending": "2025-09-30",
+        "total_revenue": 102466000000.0,
+        "gross_profit": 48341000000.0,
+        "operating_income": 32427000000.0,
+        "net_income": 27466000000.0,
+        "diluted_earnings_per_share": 1.85,
+        "research_and_development_expense": 8866000000.0,
+        "selling_general_and_admin_expense": 7048000000.0
+      },
+      {
+        "period_ending": "2025-06-30",
+        "total_revenue": 94036000000.0,
+        "gross_profit": 43718000000.0,
+        "operating_income": 28202000000.0,
+        "net_income": 23434000000.0,
+        "diluted_earnings_per_share": 1.57,
+        "research_and_development_expense": 8866000000.0,
+        "selling_general_and_admin_expense": 6650000000.0
+      },
+      {
+        "period_ending": "2025-03-31",
+        "total_revenue": 95359000000.0,
+        "gross_profit": 44867000000.0,
+        "operating_income": 29589000000.0,
+        "net_income": 24780000000.0,
+        "diluted_earnings_per_share": 1.65,
+        "research_and_development_expense": 8550000000.0,
+        "selling_general_and_admin_expense": 6728000000.0
+      },
+      {
+        "period_ending": "2024-12-31",
+        "total_revenue": 124300000000.0,
+        "gross_profit": 58275000000.0,
+        "operating_income": 42832000000.0,
+        "net_income": 36330000000.0,
+        "diluted_earnings_per_share": 2.4,
+        "research_and_development_expense": 8268000000.0,
+        "selling_general_and_admin_expense": 7175000000.0
+      }
+    ],
+    "cash": [
+      {
+        "period_ending": "2025-09-30",
+        "operating_cash_flow": 29728000000.0,
+        "capital_expenditure": -3242000000.0,
+        "free_cash_flow": 26486000000.0,
+        "repurchase_of_capital_stock": -20132000000.0,
+        "cash_dividends_paid": -3862000000.0
+      },
+      {
+        "period_ending": "2025-06-30",
+        "operating_cash_flow": 27867000000.0,
+        "capital_expenditure": -3462000000.0,
+        "free_cash_flow": 24405000000.0,
+        "repurchase_of_capital_stock": -21075000000.0,
+        "cash_dividends_paid": -3945000000.0
+      },
+      {
+        "period_ending": "2025-03-31",
+        "operating_cash_flow": 23952000000.0,
+        "capital_expenditure": -3071000000.0,
+        "free_cash_flow": 20881000000.0,
+        "repurchase_of_capital_stock": -25898000000.0,
+        "cash_dividends_paid": -3758000000.0
+      },
+      {
+        "period_ending": "2024-12-31",
+        "operating_cash_flow": 29935000000.0,
+        "capital_expenditure": -2940000000.0,
+        "free_cash_flow": 26995000000.0,
+        "repurchase_of_capital_stock": -23606000000.0,
+        "cash_dividends_paid": -3856000000.0
+      }
+    ],
+    "balance": [
+      {
+        "period_ending": "2025-09-30",
+        "cash_and_cash_equivalents": 35934000000.0,
+        "short_term_investments": 18763000000.0,
+        "total_assets": 359241000000.0,
+        "total_liabilities_net_minority_interest": 285508000000.0,
+        "total_debt": 98657000000.0,
+        "net_debt": 62723000000.0,
+        "accounts_receivable": 39777000000.0,
+        "accounts_payable": 69860000000.0,
+        "working_capital": -17674000000.0
+      },
+      {
+        "period_ending": "2025-06-30",
+        "cash_and_cash_equivalents": 36269000000.0,
+        "short_term_investments": 19103000000.0,
+        "total_assets": 331495000000.0,
+        "total_liabilities_net_minority_interest": 265665000000.0,
+        "total_debt": 101698000000.0,
+        "net_debt": 65429000000.0,
+        "accounts_receivable": 27557000000.0,
+        "accounts_payable": 50374000000.0,
+        "working_capital": -18629000000.0
+      },
+      {
+        "period_ending": "2025-03-31",
+        "cash_and_cash_equivalents": 28162000000.0,
+        "short_term_investments": 20336000000.0,
+        "total_assets": 331233000000.0,
+        "total_liabilities_net_minority_interest": 264437000000.0,
+        "total_debt": 98186000000.0,
+        "net_debt": 70024000000.0,
+        "accounts_receivable": 26136000000.0,
+        "accounts_payable": 54126000000.0,
+        "working_capital": -25897000000.0
+      },
+      {
+        "period_ending": "2024-12-31",
+        "cash_and_cash_equivalents": 30299000000.0,
+        "short_term_investments": 23476000000.0,
+        "total_assets": 344085000000.0,
+        "total_liabilities_net_minority_interest": 277327000000.0,
+        "total_debt": 96799000000.0,
+        "net_debt": 66500000000.0,
+        "accounts_receivable": 29639000000.0,
+        "accounts_payable": 61910000000.0,
+        "working_capital": -11125000000.0
+      }
+    ]
+  }
+}
