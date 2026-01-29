@@ -1,142 +1,141 @@
 # stock_agent
-**一个面向个人投资人的股票市场分析agent：**
-我们做的是一个“投研助理型”个人投资 Agent：它每天自动汇总市场热点，把新闻从碎片化报道整理成结构化事件卡（发生了什么、为什么重要、影响链条、关键观察点），并结合用户的投资组合与风险约束，输出“与你相关”的影响解读与可执行的组合指导（该关注什么、需要降低哪些风险暴露、是否触发再平衡）。它提供可追溯的依据与反证条件，让个人投资者用更少时间获得更专业的投研支持，而不是黑盒信号。
-
-## MVP功能
-1. 每日晨报：Top 5 + For You（与你持仓最相关的 3–8 条）
-2. 事件卡结构化（一句话、影响链条、观察点）
-3. 组合暴露画像（行业/地区/币种/单票集中度）
-4. 组合指导（以再平衡/风险控制/关注清单为主）
-5. 跟踪清单：把“观察点”变成提醒（比如财报、数据发布、价格/利率阈值）
+**一个面向个人投资人的股票多模块分析 agent（Multi-Agent Pipeline）：**
+本项目将行情、财务、技术指标、新闻和组合等模块拆分成独立 agent。每个 agent 负责读取
+`src/tools/outputs/` 中的 JSON 输出，并按照统一 schema 结构化输出。最终由 advisor agent 汇总
+生成投资建议，整个流程由 `run.py` 一键驱动。
 
 ---
 
 ## 快速开始
 
-### 1) 配置文件
-复制并修改 `config/config.toml`：
-- 填写 LLM 的 `base_url`、`api_key`、`model`
-- 选择行情数据源（目前推荐 `stooq`，无需 API Key）
-- 指定 portfolio 路径（默认 `data/portfolio.json`）
-
-### 2) 准备组合文件
-编辑 `data/portfolio.json` 填入你的持仓（示例已提供）。
-
-### 3) 运行
+### 1) 生成工具输出（JSON）
+请先运行 `src/tools` 下的脚本，确保它们将结果写入 `src/tools/outputs/`。例如：
 ```bash
-python run.py
+# 行情数据（脚本默认保存到 outputs/，下面示例写入 src/tools/outputs）
+python - <<'PY'
+from src.tools.market_data import build_equity_json, save_equity_json
+payload = build_equity_json("AAPL", n_days=30)
+path = save_equity_json(payload, out_dir="src/tools/outputs")
+print("saved:", path)
+PY
+
+# 财务报表与压缩（可选）
+python src/tools/financial_statement.py --ticker AAPL --period quarter --limit 4 --provider yfinance \
+  --out src/tools/outputs/openbb_financials_AAPL_quarter_yfinance_income-balance-cash.json
+python src/tools/compact_financials.py --in src/tools/outputs/openbb_financials_AAPL_quarter_yfinance_income-balance-cash.json \
+  --out src/tools/outputs/aapl_compact.json
+
+# 技术指标（可选）
+python src/tools/indicators.py --prices src/tools/outputs/AAPL_20260128T125306Z.json \
+  --out src/tools/outputs/aapl_indicators.json
+
+# 新闻（可选）
+python src/tools/news.py --ticker AAPL --limit 30 --out src/tools/outputs/AAPL.json
+
+# 组合模板（可选）
+python src/tools/portfolio.py --file src/tools/outputs/portfolio.json template --force
 ```
-运行成功后会输出 `out/AAPL.md`（基础报表）以及 `outputs/<date>_daily.md`（完整日报）。
+
+### 2) 运行 Multi-Agent Pipeline
+```bash
+python run.py --ticker AAPL
+```
+默认会读取 `src/tools/outputs/` 下的最新 JSON，并输出到：
+```
+out/AAPL_multiagent.json
+```
+
+---
+
+## 运行参数与环境变量
+
+### CLI 参数
+```bash
+python run.py \
+  --ticker AAPL \
+  --outputs-dir src/tools/outputs \
+  --out out/AAPL_multiagent.json
+```
+
+### 环境变量（可选）
+```bash
+export STOCK_AGENT_TICKER=AAPL
+export STOCK_AGENT_OUTPUTS_DIR=src/tools/outputs
+export STOCK_AGENT_REPORT_DIR=out
+```
 
 ---
 
 ## Pipeline 逻辑（端到端）
-1. `run.py` 加载 `.env` 和配置文件，并构建日报 graph。
-2. `agent.graph` 根据 state 判断是否有 `portfolio_path`：
-   - 有：进入完整日报 pipeline
-   - 无：输出最小 Markdown 报告用于快速验证
-3. `agent.orchestrator` 执行主流程：
-   - 读取组合（`portfolio.store`）
-   - 拉行情与新闻（`tools.market_data` / `tools.news`）
-   - 计算风险与快照（`analysis.risk`）
-   - 调用 LLM 输出结构化 JSON（`llm.client`）
-   - 渲染并写入 Markdown（`render.render`）
+1. `run.py` 加载 `.env` 和环境变量配置，并初始化 orchestrator。
+2. 每个模块 agent 从 `outputs` 中挑选**最新**的 JSON 文件并做结构化摘要：
+   - `market_data`: 行情价格快照
+   - `financials`: 财务摘要（支持压缩后的 compact 输出）
+   - `indicators`: 技术指标 + 性能指标
+   - `news`: 新闻聚合
+   - `portfolio`: 持仓与基准
+3. advisor agent 基于各模块输出生成投资建议摘要。
+4. 最终将所有模块 + 建议合并写入 `out/<TICKER>_multiagent.json`。
 
 ---
 
-## 主要模块说明
+## 目录结构（核心）
 ```
-daily-report/
-├─ pyproject.toml                 # 推荐用 Poetry/uv/pip-tools 管理依赖
-├─ README.md
-├─ .env.example                   # 环境变量示例（不放密钥）
-├─ config/
-│  ├─ config.toml                 # 默认配置（可多环境拆分）
-│  ├─ config.dev.toml
-│  └─ config.prod.toml
-├─ data/
-│  ├─ portfolios/
-│  │  └─ default.json             # 持仓模板（可多个组合）
-│  └─ cache/                      # 可选：行情/新闻缓存
-├─ outputs/
-│  └─ ...                         # 生成的日报（gitignore）
-├─ scripts/
-│  └─ run_local.py                # 仅本地调试脚本（可选）
+stock_agent/
+├─ run.py                       # ✅ Multi-Agent 入口
 ├─ src/
-│  └─ daily_report/
-│     ├─ __init__.py
-│     ├─ cli.py                   # ✅ 统一入口（取代 run.py）
-│     ├─ config/
-│     │  ├─ __init__.py
-│     │  └─ loader.py             # 读取 toml + env 覆盖
-│     ├─ pipeline/
-│     │  ├─ __init__.py
-│     │  ├─ graph.py              # “日报 graph 接口”
-│     │  └─ orchestrator.py       # 主流程编排
-│     ├─ domain/
-│     │  ├─ __init__.py
-│     │  ├─ models.py             # Portfolio/Position/Report 等数据模型（dataclass/pydantic）
-│     │  └─ schema.py             # LLM 输出 JSON schema / 校验逻辑
-│     ├─ providers/
-│     │  ├─ __init__.py
-│     │  ├─ market/
-│     │  │  ├─ __init__.py
-│     │  │  └─ stooq.py           # 行情源实现
-│     │  └─ news/
-│     │     ├─ __init__.py
-│     │     └─ gdelt.py           # 新闻源实现
-│     ├─ analysis/
-│     │  ├─ __init__.py
-│     │  └─ risk.py               # 波动率/回撤/收益等
-│     ├─ llm/
-│     │  ├─ __init__.py
-│     │  ├─ client.py             # OpenAI-compatible client
-│     │  └─ prompts/
-│     │     └─ daily_report.md
-│     ├─ render/
-│     │  ├─ __init__.py
-│     │  ├─ renderer.py           # 渲染 Markdown / 模板
-│     │  └─ templates/
-│     │     └─ daily_report.md    # ✅ 建议把“模板”与“prompt”分开
-│     └─ utils/
-│        ├─ __init__.py
-│        └─ logging.py            # 日志、重试、通用工具
-└─ tests/
-   ├─ test_risk.py
-   ├─ test_news_gdelt.py
-   └─ test_pipeline_smoke.py
+│  ├─ agent/
+│  │  ├─ config.py              # 环境变量配置
+│  │  └─ multiagent/
+│  │     ├─ agents.py           # 各模块 agent + advisor
+│  │     ├─ orchestrator.py     # 流程编排
+│  │     └─ schema.py           # 统一输出 schema
+│  └─ tools/
+│     ├─ market_data.py
+│     ├─ financial_statement.py
+│     ├─ compact_financials.py
+│     ├─ indicators.py
+│     ├─ news.py
+│     ├─ portfolio.py
+│     └─ outputs/               # ✅ 工具输出 JSON 目录
+└─ out/                          # ✅ pipeline 汇总输出
 ```
+
 ---
 
-## 使用教程
-
-### 切换行情数据源
-在 `config/config.toml` 中修改：
-```toml
-[market_data]
-provider = "stooq"
-```
-目前推荐 `stooq`（无需 API key）。
-
-### 切换 LLM
-```toml
-[llm]
-base_url = "https://api.openai.com/v1"
-api_key = "YOUR_LLM_API_KEY"
-model = "gpt-4o-mini"
-```
-
-### 自定义组合
-编辑 `data/portfolio.json`：
+## 输出示例（schema 结构）
 ```json
 {
-  "holdings": [
-    { "ticker": "AAPL", "shares": 10 },
-    { "ticker": "TSLA", "shares": 5 }
+  "schema_version": "1.0",
+  "ticker": "AAPL",
+  "asof_utc": "2026-01-28T12:53:05Z",
+  "modules": [
+    {
+      "module": "market_data",
+      "schema_version": "1.0",
+      "asof_utc": "2026-01-28T12:53:05Z",
+      "source_files": ["src/tools/outputs/AAPL_20260128T125306Z.json"],
+      "summary": "Latest close 274.61, change -0.55%.",
+      "data": { "latest_close": 274.61, "daily_change_pct": -0.0055 }
+    }
   ],
-  "benchmarks": ["SPY"]
+  "advice": {
+    "agent": "advisor",
+    "summary": "基于现有模块数据生成初步投资建议。",
+    "signals": [],
+    "risk_notes": [],
+    "action_items": []
+  }
 }
 ```
 
-### 输出位置
-`outputs/` 会生成当天日报 Markdown 与来源索引。
+---
+
+## 常见问题
+
+### 1) outputs 里没有对应的 JSON 会怎样？
+对应模块会输出 `status: missing`，其余模块仍正常运行。
+
+### 2) 如何扩展新的模块？
+在 `src/agent/multiagent/agents.py` 中继承 `ModuleAgent`，实现 `summarize()`，
+并在 `orchestrator._agents()` 里注册对应文件匹配规则即可。
