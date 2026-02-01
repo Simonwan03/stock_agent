@@ -40,6 +40,14 @@ DEFAULT_DOMAIN_ALLOWLIST = [
     "theinformation.com",
 ]
 
+DEFAULT_DOMAIN_BLOCKLIST = [
+    "prnewswire.com",
+    "globenewswire.com",
+    "businesswire.com",
+    "accesswire.com",
+    "newsfilecorp.com",
+]
+
 DEFAULT_EXTRA_TERMS = [
     "earnings",
     "guidance",
@@ -107,6 +115,19 @@ def _norm_title(title: str) -> str:
     t = re.sub(r"[^\w\s]", "", t)
     return t
 
+def _extract_domain(url: str, fallback: str = "") -> str:
+    url = (url or "").strip()
+    if not url:
+        return (fallback or "").strip().lower()
+    try:
+        u = urllib.parse.urlsplit(url)
+        host = u.netloc.lower()
+        if host.startswith("www."):
+            host = host[4:]
+        return host or (fallback or "").strip().lower()
+    except Exception:
+        return (fallback or "").strip().lower()
+
 
 def _hash(s: str) -> str:
     return hashlib.sha1((s or "").encode("utf-8", errors="ignore")).hexdigest()
@@ -115,11 +136,26 @@ def _hash(s: str) -> str:
 def _dedup(items: List[NewsItem]) -> List[NewsItem]:
     seen = set()
     out: List[NewsItem] = []
+    title_tokens_by_domain: Dict[str, List[set]] = {}
     for it in items:
         k1 = _hash(_norm_url(it.url))
         k2 = _hash((it.domain or "") + "|" + _norm_title(it.title))
         if k1 in seen or k2 in seen:
             continue
+        # Intra-domain near-duplicate title filter (Jaccard)
+        tokens = set(_norm_title(it.title).split())
+        if tokens:
+            bucket = title_tokens_by_domain.setdefault(it.domain or "", [])
+            is_dup = False
+            for existing in bucket:
+                inter = len(tokens & existing)
+                union = len(tokens | existing)
+                if union and (inter / union) >= 0.9:
+                    is_dup = True
+                    break
+            if is_dup:
+                continue
+            bucket.append(tokens)
         seen.add(k1)
         seen.add(k2)
         out.append(it)
@@ -143,6 +179,37 @@ def _domain_weight(domain: str) -> int:
     if "finance.yahoo.com" in d:
         return 50
     return 50  # unknown/other allowlisted
+
+def _title_mentions_ticker(title: str, tickers: Sequence[str]) -> bool:
+    t = _norm_title(title)
+    if not t:
+        return False
+    tokens = set(t.split())
+    for tk in tickers:
+        if not tk:
+            continue
+        tkl = tk.lower()
+        if tkl in tokens:
+            return True
+    return False
+
+def _should_keep_item(
+    it: NewsItem,
+    tickers: Sequence[str],
+    domain_blocklist: Sequence[str],
+    require_ticker_in_title: bool,
+    min_title_len: int = 12,
+) -> bool:
+    if not it.title or len(it.title.strip()) < min_title_len:
+        return False
+    if not it.url:
+        return False
+    domain = (it.domain or "").lower()
+    if any(b in domain for b in domain_blocklist):
+        return False
+    if require_ticker_in_title and not _title_mentions_ticker(it.title, tickers):
+        return False
+    return True
 
 
 def _parse_dt_maybe(s: str) -> Optional[datetime]:
@@ -226,6 +293,8 @@ def fetch_openbb_company_news(
                     "published_at": _to_iso_z(dt) if dt else (str(r.get(date_c, "")) if date_c else ""),
                     "text": str(r.get(text_c, "")) if text_c and r.get(text_c) else "",
                 }
+                if not item["domain"]:
+                    item["domain"] = _extract_domain(item["url"])
                 
                 rows.append((dt, item))
 
@@ -308,6 +377,8 @@ def fetch_gdelt_news(
     max_records: int = 40,
     domains_allowlist: Optional[Sequence[str]] = None,
     extra_terms: Optional[Sequence[str]] = None,
+    require_ticker_in_title: bool = True,
+    domain_blocklist: Optional[Sequence[str]] = None,
 ) -> List[NewsItem]:
     # More precise than "AAPL OR MSFT": require some finance/market terms too
     base = " OR ".join([f'"{t}"' for t in tickers])
@@ -328,19 +399,31 @@ def fetch_gdelt_news(
 
     out: List[NewsItem] = []
     for e in payload.get("articles", []):
+        domain = _extract_domain(e.get("url", ""), e.get("domain", ""))
         out.append(
             NewsItem(
                 title=e.get("title", ""),
                 url=e.get("url", ""),
-                source=e.get("sourceCountry", "") or e.get("sourcecountry", ""),
-                domain=e.get("domain", ""),
+                source=e.get("sourceCountry", "") or e.get("sourcecountry", "") or domain,
+                domain=domain,
                 published_at=e.get("seendate", ""),
                 tickers=list(tickers),
                 provider="gdelt",
                 text="",  # GDELT artlist usually doesn't include full text
             )
         )
-    return out
+    if domain_blocklist is None:
+        domain_blocklist = DEFAULT_DOMAIN_BLOCKLIST
+    return [
+        it
+        for it in out
+        if _should_keep_item(
+            it,
+            tickers=tickers,
+            domain_blocklist=domain_blocklist,
+            require_ticker_in_title=require_ticker_in_title,
+        )
+    ]
 
 
 # ----------------------------
@@ -352,6 +435,9 @@ def fetch_news_merged_free(
     max_items: int = 20,
     gdelt_domains_allowlist: Sequence[str] = DEFAULT_DOMAIN_ALLOWLIST,
     gdelt_extra_terms: Sequence[str] = DEFAULT_EXTRA_TERMS,
+    gdelt_domain_blocklist: Sequence[str] = DEFAULT_DOMAIN_BLOCKLIST,
+    require_ticker_in_title_for_gdelt: bool = True,
+    min_score: float = 70.0,
 ) -> List[Dict[str, Any]]:
     """
     Returns JSON-ready list (dicts), merged + deduped + ranked.
@@ -372,6 +458,8 @@ def fetch_news_merged_free(
                     max_records=max_items * 3,
                     domains_allowlist=gdelt_domains_allowlist,
                     extra_terms=gdelt_extra_terms,
+                    require_ticker_in_title=require_ticker_in_title_for_gdelt,
+                    domain_blocklist=gdelt_domain_blocklist,
                 )
             )
         except Exception:
@@ -381,6 +469,8 @@ def fetch_news_merged_free(
 
     # rank
     items.sort(key=lambda it: _score_item(it, tickers), reverse=True)
+    if min_score and min_score > 0:
+        items = [it for it in items if _score_item(it, tickers) >= min_score]
 
     # output as dicts
     out: List[Dict[str, Any]] = []
