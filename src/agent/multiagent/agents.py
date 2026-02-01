@@ -76,6 +76,28 @@ def _clip_payload(module: str, payload: Any) -> Any:
                 )
             return clipped
         return payload
+    if module == "reports":
+        items = payload.get("items") if isinstance(payload, dict) else None
+        if isinstance(items, list):
+            clipped = []
+            for item in items[:25]:
+                if not isinstance(item, dict):
+                    clipped.append(item)
+                    continue
+                clipped.append(
+                    {
+                        "form": item.get("form"),
+                        "filing_date": item.get("filing_date"),
+                        "report_date": item.get("report_date"),
+                        "filing_url": item.get("filing_url"),
+                    }
+                )
+            return {
+                "ticker": payload.get("ticker"),
+                "company": payload.get("company"),
+                "items": clipped,
+            }
+        return payload
 
     if not isinstance(payload, dict):
         return payload
@@ -126,6 +148,15 @@ def _module_schema_template(module: str) -> str:
                 "top_sources": ["[source, count]"],
                 "themes": ["string"],
                 "sentiment": "positive|neutral|negative|mixed",
+            },
+        },
+        "reports": {
+            "summary": "string",
+            "data": {
+                "count": "int",
+                "latest_form": "string|null",
+                "latest_filing_date": "string|null",
+                "forms_breakdown": ["[form, count]"],
             },
         },
         "portfolio": {
@@ -301,6 +332,31 @@ class NewsAgent(ModuleAgent):
         return summary, {
             "count": len(payload),
             "top_sources": top_sources,
+        }
+
+
+class ReportsAgent(ModuleAgent):
+    def summarize(self, payload: Any) -> tuple[str, Dict[str, Any]]:
+        if not isinstance(payload, dict):
+            return "Reports payload not recognized.", {"status": "invalid"}
+        items = payload.get("items", [])
+        if not isinstance(items, list) or not items:
+            return "No reports found.", {"count": 0}
+        forms: Dict[str, int] = {}
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            form = item.get("form")
+            if not form:
+                continue
+            forms[form] = forms.get(form, 0) + 1
+        latest = items[0] if isinstance(items[0], dict) else {}
+        summary = f"{len(items)} SEC filings collected."
+        return summary, {
+            "count": len(items),
+            "latest_form": latest.get("form"),
+            "latest_filing_date": latest.get("filing_date"),
+            "forms_breakdown": sorted(forms.items(), key=lambda x: x[1], reverse=True),
         }
 
 

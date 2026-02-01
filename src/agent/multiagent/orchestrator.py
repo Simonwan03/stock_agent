@@ -12,6 +12,7 @@ from .agents import (
     ModuleAgent,
     NewsAgent,
     PortfolioAgent,
+    ReportsAgent,
 )
 from .schema import build_pipeline_output
 from ..llm_client import LLMClient
@@ -59,6 +60,15 @@ class MultiAgentOrchestrator:
                     "{ticker_upper}_news*.json",
                     "{ticker_lower}_news*.json",
                     "*news*.json",
+                ],
+                llm=self.llm,
+            ),
+            ReportsAgent(
+                name="reports",
+                patterns=[
+                    "{ticker_upper}_reports*.json",
+                    "{ticker_lower}_reports*.json",
+                    "*_reports*.json",
                 ],
                 llm=self.llm,
             ),

@@ -32,6 +32,11 @@ python src/tools/indicators.py --ticker AAPL --outputs-dir src/tools/outputs \
 # 新闻（可选）
 python src/tools/news.py --tickers AAPL --limit 30 --out src/tools/outputs/AAPL_news.json
 
+# SEC 报告（可选，质量更高的官方报告）
+# 需要设置 SEC User-Agent（按 SEC 规范填写）
+export SEC_USER_AGENT="Your Name your_email@example.com"
+python src/tools/reports.py --ticker AAPL --limit 20 --out src/tools/outputs/AAPL_reports.json
+
 # 组合模板（可选）
 python src/tools/portfolio.py --file src/tools/outputs/portfolio.json template --force
 ```
@@ -87,9 +92,10 @@ timeout = 60
 2. 每个模块 agent 从 `outputs` 中挑选**最新**的 JSON 文件并调用一次 LLM 做结构化摘要：
    - `market_data`: 行情价格快照
    - `financials`: 财务摘要（支持压缩后的 compact 输出）
-   - `indicators`: 技术指标 + 性能指标
-   - `news`: 新闻聚合
-   - `portfolio`: 持仓与基准
+  - `indicators`: 技术指标 + 性能指标
+  - `news`: 新闻聚合
+  - `reports`: SEC 官方报告（10-K/10-Q/8-K 等）
+  - `portfolio`: 持仓与基准
 3. advisor agent 再调用一次 LLM 基于各模块输出生成投资建议摘要。
 4. 最终将所有模块 + 建议合并写入 `out/<TICKER>_multiagent.json`。
 
@@ -112,6 +118,7 @@ stock_agent/
 │     ├─ compact_financials.py
 │     ├─ indicators.py
 │     ├─ news.py
+│     ├─ reports.py
 │     ├─ portfolio.py
 │     └─ outputs/               # ✅ 工具输出 JSON 目录
 └─ out/                          # ✅ pipeline 汇总输出
