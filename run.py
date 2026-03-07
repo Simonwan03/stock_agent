@@ -56,8 +56,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     load_dotenv()
-    settings = get_settings()
     args = parse_args()
+    settings = get_settings()
 
     # Use CLI arguments if provided, otherwise fall back to settings/env defaults.
     ticker = args.ticker.strip().upper() if args.ticker else settings.default_ticker

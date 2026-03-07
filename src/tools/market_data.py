@@ -1,16 +1,18 @@
 import json
+import argparse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
-from openbb import obb
 
-try:
-    # 如果环境里有 openbb_core，用它能更精确捕获 OpenBBError
-    from openbb_core.app.model.abstract.error import OpenBBError
-except Exception:  # pragma: no cover
-    OpenBBError = Exception
+
+def _get_openbb():
+    try:
+        from openbb import obb  # type: ignore
+    except Exception as exc:
+        raise RuntimeError("OpenBB is required for market data. Install with: pip install openbb") from exc
+    return obb
 
 
 def _normalize_col(name: str) -> str:
@@ -114,7 +116,8 @@ def build_equity_json(
       - trailing dividend yield series (optional; skipped if credentials missing)
     """
 
-    # timezone-aware UTC 
+    # timezone-aware UTC
+    obb = _get_openbb()
     now_utc = datetime.now(timezone.utc)
     end_date = now_utc.date()
     start_date = (end_date - timedelta(days=max(10, n_days * 2))).isoformat()
@@ -130,9 +133,6 @@ def build_equity_json(
         )
         .to_df()
     )
-    print("########")
-    print(price_df.columns)
-    print("########")
     price_df = _df_last_n_trading_days(price_df, n_days)
 
     date_col = _pick_col(price_df, ["date", "datetime", "time"])
@@ -240,9 +240,6 @@ def build_equity_json(
             if metrics_df is None or metrics_df.empty:
                 continue
             m = metrics_df.iloc[0].to_dict()
-            print("########")
-            print(metrics_df.columns)
-            print("########")
             for key, candidates in metric_candidates.items():
                 if latest_metrics.get(key) is not None:
                     continue
@@ -309,9 +306,6 @@ def build_equity_json(
                     latest_metrics["dividend_yield"] = series[-1]["trailing_dividend_yield"]
                 break
 
-        except OpenBBError:
-            # 常见情况：缺 token（比如 tiingo_token）
-            continue
         except Exception:
             continue
 
@@ -352,7 +346,27 @@ def save_equity_json(
     return file_path
 
 
-if __name__ == "__main__":
-    data = build_equity_json("AAPL", n_days=30)
-    out_file = save_equity_json(data, out_dir="outputs")
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Fetch equity market data and save JSON for the pipeline.")
+    p.add_argument("--ticker", default="AAPL", help="Ticker symbol, e.g. AAPL")
+    p.add_argument("--n-days", type=int, default=30, help="Number of recent trading days to include.")
+    p.add_argument("--out-dir", default="outputs", help="Output directory.")
+    p.add_argument("--out", default="", help="Output filename. Defaults to <TICKER>.json")
+    p.add_argument("--price-provider", default="yfinance", help="OpenBB price provider.")
+    return p.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    payload = build_equity_json(
+        symbol=args.ticker.strip().upper(),
+        n_days=max(1, int(args.n_days)),
+        price_provider=args.price_provider,
+    )
+    out_file = save_equity_json(payload, out_dir=args.out_dir, filename=(args.out or None))
     print(f"saved: {out_file}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

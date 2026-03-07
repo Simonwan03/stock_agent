@@ -34,8 +34,6 @@ class MultiAgentOrchestrator:
                 patterns=[
                     "{ticker_upper}.json",
                     "{ticker_lower}.json",
-                    "{ticker_upper}_*.json",
-                    "{ticker_lower}_*.json",
                 ],
                 llm=self.llm,
             ),
@@ -45,6 +43,7 @@ class MultiAgentOrchestrator:
                     "*{ticker_upper}*compact*.json",
                     "*{ticker_lower}*compact*.json",
                     "*openbb_financials*{ticker_upper}*.json",
+                    "*openbb_financials*{ticker_lower}*.json",
                 ],
                 llm=self.llm,
             ),
@@ -58,7 +57,6 @@ class MultiAgentOrchestrator:
                 patterns=[
                     "{ticker_upper}_news*.json",
                     "{ticker_lower}_news*.json",
-                    "*news*.json",
                 ],
                 llm=self.llm,
             ),

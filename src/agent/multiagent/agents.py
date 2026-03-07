@@ -22,14 +22,12 @@ def _format_patterns(patterns: Iterable[str], ticker: str) -> List[str]:
     ]
 
 
-def _find_latest_file(outputs_dir: Path, patterns: Sequence[str]) -> Optional[Path]:
+def _find_candidate_files(outputs_dir: Path, patterns: Sequence[str]) -> List[Path]:
     matches: List[Path] = []
     for pattern in patterns:
         matches.extend(outputs_dir.glob(pattern))
-    matches = [m for m in matches if m.is_file()]
-    if not matches:
-        return None
-    return max(matches, key=lambda p: p.stat().st_mtime)
+    unique = sorted({m for m in matches if m.is_file()}, key=lambda p: p.stat().st_mtime, reverse=True)
+    return unique
 
 
 def _parse_json_response(text: str) -> Dict[str, Any]:
@@ -53,6 +51,31 @@ def _coerce_llm_output(obj: Any) -> tuple[str, Dict[str, Any]]:
     if not isinstance(data, dict):
         data = {"raw": data}
     return summary, data
+
+
+def _to_str_list(value: Any) -> List[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(v) for v in value if v is not None]
+
+
+def _coerce_advice_llm_output(obj: Any) -> Dict[str, Any]:
+    if not isinstance(obj, dict):
+        raise ValueError("Advisor LLM output is not a JSON object.")
+    summary = obj.get("summary")
+    if not isinstance(summary, str) or not summary.strip():
+        summary = "LLM summary generated."
+    data = obj.get("data")
+    payload = data if isinstance(data, dict) else obj
+    return {
+        "summary": summary,
+        "signals": _to_str_list(payload.get("signals")),
+        "risk_notes": _to_str_list(payload.get("risk_notes")),
+        "action_items": _to_str_list(payload.get("action_items")),
+        "stance": str(payload.get("stance") or "unknown"),
+        "confidence": str(payload.get("confidence") or "unknown"),
+        "time_horizon": str(payload.get("time_horizon") or "unknown"),
+    }
 
 
 def _clip_payload(module: str, payload: Any) -> Any:
@@ -194,8 +217,8 @@ class ModuleAgent:
                 progress(msg)
         # Locate the newest JSON output for this module.
         _p(f"[{self.name}] searching outputs in {outputs_dir} ...")
-        path = _find_latest_file(outputs_dir, _format_patterns(self.patterns, ticker))
-        if not path:
+        candidates = _find_candidate_files(outputs_dir, _format_patterns(self.patterns, ticker))
+        if not candidates:
             _p(f"[{self.name}] no source file found")
             return build_module_output(
                 module=self.name,
@@ -203,9 +226,27 @@ class ModuleAgent:
                 data={"status": "missing"},
                 source_files=[],
             )
+        path: Optional[Path] = None
+        payload: Any = None
+        for candidate in candidates:
+            try:
+                candidate_payload = _load_json(candidate)
+            except json.JSONDecodeError:
+                continue
+            if self.accepts_payload(candidate_payload):
+                path = candidate
+                payload = candidate_payload
+                break
+        if path is None:
+            _p(f"[{self.name}] no valid source file found")
+            return build_module_output(
+                module=self.name,
+                summary="No valid source file found.",
+                data={"status": "invalid_source"},
+                source_files=[str(candidates[0])],
+            )
         # Summarize the raw payload into the shared schema format.
         _p(f"[{self.name}] loading {path}")
-        payload = _load_json(path)
         if self.llm:
             try:
                 _p(f"[{self.name}] calling LLM")
@@ -229,8 +270,14 @@ class ModuleAgent:
     def summarize(self, payload: Any) -> tuple[str, Dict[str, Any]]:
         raise NotImplementedError
 
+    def accepts_payload(self, payload: Any) -> bool:
+        return True
+
 
 class MarketDataAgent(ModuleAgent):
+    def accepts_payload(self, payload: Any) -> bool:
+        return isinstance(payload, dict) and isinstance(payload.get("prices"), list)
+
     def summarize(self, payload: Any) -> tuple[str, Dict[str, Any]]:
         prices = payload.get("prices") if isinstance(payload, dict) else None
         if not isinstance(prices, list) or not prices:
@@ -252,24 +299,57 @@ class MarketDataAgent(ModuleAgent):
 
 
 class FinancialsAgent(ModuleAgent):
+    def accepts_payload(self, payload: Any) -> bool:
+        if not isinstance(payload, dict):
+            return False
+        return isinstance(payload.get("key_metrics"), dict) or isinstance(payload.get("statements"), dict)
+
+    def _first_number(self, values: Any) -> Optional[float]:
+        if isinstance(values, list) and values:
+            v = values[0]
+        else:
+            v = values
+        if isinstance(v, (int, float)):
+            return float(v)
+        return None
+
     def summarize(self, payload: Any) -> tuple[str, Dict[str, Any]]:
         if not isinstance(payload, dict):
             return "Financials payload not recognized.", {"status": "invalid"}
         key_metrics = payload.get("key_metrics", {})
         revenue = key_metrics.get("revenue", {}).get("latest") if isinstance(key_metrics, dict) else None
         net_margin = key_metrics.get("net_margin", {}).get("latest") if isinstance(key_metrics, dict) else None
+        asof = payload.get("asof")
+
+        if revenue is None:
+            statements = payload.get("statements", {})
+            income = statements.get("income", {}) if isinstance(statements, dict) else {}
+            if isinstance(income, dict):
+                revenue = self._first_number(income.get("total_revenue") or income.get("operating_revenue"))
+                net_income = self._first_number(income.get("net_income"))
+                if net_margin is None and revenue not in (None, 0) and net_income is not None:
+                    net_margin = net_income / revenue
+                period_ending = income.get("period_ending")
+                if asof is None and isinstance(period_ending, list) and period_ending:
+                    asof = period_ending[0]
+
         summary = "Financial snapshot loaded."
         if revenue is not None:
             summary = f"Latest revenue {revenue:,}."
         return summary, {
-            "asof": payload.get("asof"),
+            "asof": asof,
             "revenue_latest": revenue,
             "net_margin_latest": net_margin,
-            "key_metrics": key_metrics,
+            "key_metrics": key_metrics if isinstance(key_metrics, dict) else {},
         }
 
 
 class IndicatorsAgent(ModuleAgent):
+    def accepts_payload(self, payload: Any) -> bool:
+        return isinstance(payload, dict) and (
+            isinstance(payload.get("performance"), dict) or isinstance(payload.get("technical"), list)
+        )
+
     def summarize(self, payload: Any) -> tuple[str, Dict[str, Any]]:
         if not isinstance(payload, dict):
             return "Indicators payload not recognized.", {"status": "invalid"}
@@ -287,24 +367,37 @@ class IndicatorsAgent(ModuleAgent):
 
 
 class NewsAgent(ModuleAgent):
+    def accepts_payload(self, payload: Any) -> bool:
+        return isinstance(payload, list) or (
+            isinstance(payload, dict) and isinstance(payload.get("items"), list)
+        )
+
     def summarize(self, payload: Any) -> tuple[str, Dict[str, Any]]:
-        if not isinstance(payload, list):
+        items = payload
+        if isinstance(payload, dict):
+            items = payload.get("items")
+        if not isinstance(items, list):
             return "News payload not recognized.", {"status": "invalid"}
-        sources = [item.get("source") for item in payload if isinstance(item, dict)]
+        sources = [item.get("source") for item in items if isinstance(item, dict)]
         source_counts: Dict[str, int] = {}
         for src in sources:
             if not src:
                 continue
             source_counts[src] = source_counts.get(src, 0) + 1
         top_sources = sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:3]
-        summary = f"{len(payload)} news items collected."
+        summary = f"{len(items)} news items collected."
         return summary, {
-            "count": len(payload),
+            "count": len(items),
             "top_sources": top_sources,
         }
 
 
 class PortfolioAgent(ModuleAgent):
+    def accepts_payload(self, payload: Any) -> bool:
+        return isinstance(payload, dict) and (
+            isinstance(payload.get("holdings"), list) or isinstance(payload.get("benchmarks"), list)
+        )
+
     def summarize(self, payload: Any) -> tuple[str, Dict[str, Any]]:
         if not isinstance(payload, dict):
             return "Portfolio payload not recognized.", {"status": "invalid"}
@@ -371,16 +464,16 @@ class AdvisorAgent:
             try:
                 response = self.llm.chat(self._build_advice_prompt(ticker, modules), temperature=0.3)
                 obj = _parse_json_response(response)
-                summary, data = _coerce_llm_output(obj)
+                advice = _coerce_advice_llm_output(obj)
                 return build_advice_output(
                     ticker=ticker,
-                    summary=summary,
-                    signals=list(data.get("signals") or []),
-                    risk_notes=list(data.get("risk_notes") or []),
-                    action_items=list(data.get("action_items") or []),
-                    stance=str(data.get("stance") or "unknown"),
-                    confidence=str(data.get("confidence") or "unknown"),
-                    time_horizon=str(data.get("time_horizon") or "unknown"),
+                    summary=advice["summary"],
+                    signals=advice["signals"],
+                    risk_notes=advice["risk_notes"],
+                    action_items=advice["action_items"],
+                    stance=advice["stance"],
+                    confidence=advice["confidence"],
+                    time_horizon=advice["time_horizon"],
                     agent=self.name,
                 )
             except (LLMError, ValueError, json.JSONDecodeError) as exc:

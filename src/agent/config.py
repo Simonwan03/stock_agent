@@ -41,7 +41,11 @@ def _env_path(key: str, default: Path) -> Path:
 def _load_toml(path: Path) -> Dict[str, Any]:
     if not path.exists() or tomllib is None:
         return {}
-    return tomllib.loads(path.read_text(encoding="utf-8"))
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        # Keep runtime resilient: malformed config should not block CLI execution.
+        return {}
 
 
 def get_settings() -> Settings:

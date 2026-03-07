@@ -22,7 +22,14 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import pandas as pd
-from openbb import obb
+
+
+def _get_openbb():
+    try:
+        from openbb import obb  # type: ignore
+    except Exception as exc:
+        raise RuntimeError("OpenBB is required for company news. Install with: pip install openbb") from exc
+    return obb
 
 # ----------------------------
 # Config
@@ -193,6 +200,7 @@ def fetch_openbb_company_news(
     lookback_hours: int = 72,
     max_per_ticker: int = 10,
 ) -> List[NewsItem]:
+    obb = _get_openbb()
     cutoff = _utc_now() - timedelta(hours=lookback_hours)
     out: List[NewsItem] = []
 

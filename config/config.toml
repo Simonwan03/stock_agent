@@ -4,7 +4,6 @@ base_url = "https://api.deepseek.com"
 api_key = "sk-***"
 model = "deepseek-reasoner"
 timeout = 60
-timeout = 90
 
 [market_data]
 # Supported: "stooq" (no API key, free)
